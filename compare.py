@@ -125,14 +125,6 @@ def compare_webcam_to_reference(reference_landmarks):
                 else:
                     print("Pose matched. No feedback needed.")
                     
-                try:
-                    # Your main loop or logic
-                    speak_feedback(feedback_messages)
-                except KeyboardInterrupt:
-                    print("Stopping the application...")
-                    tts_engine.stop()
-                    global stop_tts  # Stop the TTS engine if it's running
-                    stop_tts = True  # Set the flag to stop feedback
 
             # Show the live webcam feed
             cv2.imshow("Live Webcam Feed", webcam_frame)
