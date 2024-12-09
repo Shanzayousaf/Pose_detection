@@ -4,12 +4,12 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import numpy as np
 from audio import BeepSoundManager  # Import BeepSoundManager from audio.py
+from feedback import check_posture, speak_feedback, tts_engine  # Import the feedback logic
 
 # Initialize MediaPipe Pose detection
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 pose = mp_pose.Pose()
-
 
 # Function to calculate similarity between two sets of landmarks
 def calculate_similarity(landmarks_1, landmarks_2):
@@ -103,12 +103,36 @@ def compare_webcam_to_reference(reference_landmarks):
                     2,
                 )
 
-                # Trigger beep or print message depending on similarity threshold
+                # Trigger beep or feedback depending on similarity threshold
                 if similarity < 0.7:
                     print("Pose didn't match")
                     beep_manager.play_beep()
+                    # Implement feedback
+                    feedback_messages = check_posture(result.pose_landmarks.landmark)
+                    for index, message in enumerate(feedback_messages):
+                        cv2.putText(
+                            webcam_frame, 
+                            message,
+                            (10, 60 + index * 30),  # Display feedback at an offset
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            (0, 0, 255),
+                            2,
+                            )
+                    if feedback_messages:  # Play feedback if available
+                           speak_feedback(feedback_messages)
+                           print(message)  # Optional: Print the feedback messages
                 else:
-                    print("Pose matched")
+                    print("Pose matched. No feedback needed.")
+                    
+                try:
+                    # Your main loop or logic
+                    speak_feedback(feedback_messages)
+                except KeyboardInterrupt:
+                    print("Stopping the application...")
+                    tts_engine.stop()
+                    global stop_tts  # Stop the TTS engine if it's running
+                    stop_tts = True  # Set the flag to stop feedback
 
             # Show the live webcam feed
             cv2.imshow("Live Webcam Feed", webcam_frame)
@@ -126,7 +150,6 @@ def compare_webcam_to_reference(reference_landmarks):
     finally:
         cap.release()
         cv2.destroyAllWindows()
-
 
 if __name__ == "__main__":
     # Allow user to select the reference image
@@ -146,3 +169,4 @@ if __name__ == "__main__":
             compare_webcam_to_reference(reference_landmarks)
         else:
             print("Could not detect landmarks from the reference image. Exiting.")
+            
